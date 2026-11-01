@@ -1,39 +1,46 @@
 ﻿# RefrigeracionControl
 
-Sistema web de gestión administrativa y operativa
-para empresas de refrigeración.
+Application web de gestion administrative et opérationnelle destinée aux entreprises spécialisées en réfrigération.
 
-## Tecnologías
+## Technologies
+
 - ASP.NET Core MVC 10
 - C#
 - Entity Framework Core 10
 - PostgreSQL
 - ASP.NET Core Identity
 - Bootstrap 5
-- JavaScript, HTML y CSS
+- JavaScript, HTML et CSS
 
-## Arquitectura
+## Architecture
+
 - RefrigeracionControl.Web
 - RefrigeracionControl.Application
 - RefrigeracionControl.Domain
 - RefrigeracionControl.Infrastructure
 
-## Funcionalidades implementadas
-- Autenticación y autorización por roles
-- Gestión de administradores, supervisores y técnicos
-- Asignación de técnicos a supervisores
-- Consulta del supervisor de cada técnico
-- Registro y consulta de órdenes de servicio
-- Dashboard administrativo
+## Fonctionnalités implémentées
 
-## Próximas funcionalidades
-- Ejecución de órdenes de trabajo
-- Diagnósticos y reportes técnicos
-- Revisión y cierre de órdenes
-- Gestión de clientes
-- Gestión de equipos de refrigeración
-- Inventario
-- Reportes y estadísticas
+- Authentification et autorisation basées sur les rôles
+- Gestion des administrateurs, des superviseurs et des techniciens
+- Affectation des techniciens aux superviseurs
+- Consultation des informations du superviseur affecté à chaque technicien
+- Création et consultation des ordres de service
+- Tableau de bord administratif
+
+## Fonctionnalités à venir
+
+- Exécution et suivi des ordres de travail
+- Diagnostics et rapports techniques
+- Vérification et clôture des ordres de travail
+- Gestion des clients
+- Gestion des équipements de réfrigération
+- Gestion des stocks et des pièces de rechange
+- Rapports et statistiques
+
+## État du projet
+
+Projet en cours de développement.
 
 ## Estado
 Proyecto en desarrollo.
