@@ -7,7 +7,7 @@
 
 <div class="dashboard-heading">
     <h2>Orden OT-@Model.Id.ToString("D5")</h2>
-    <p>Detalle de la intervención técnica.</p>
+    <p>Detalle y seguimiento de la intervención técnica.</p>
 </div>
 
 @if (TempData["Success"] != null)
@@ -24,11 +24,19 @@
     </div>
 }
 
+<!-- INFORMACIÓN DE LA ORDEN -->
 <div class="panel-card mb-4">
+
     <h3>@Model.Title</h3>
 
     <p>
-        <strong>Tipo:</strong> @Model.ServiceType
+        <strong>Número:</strong>
+        OT-@Model.Id.ToString("D5")
+    </p>
+
+    <p>
+        <strong>Tipo de mantenimiento:</strong>
+        @Model.ServiceType
     </p>
 
     <p>
@@ -39,49 +47,71 @@
     </p>
 
     <p>
-        <strong>Técnico:</strong>
+        <strong>Técnico responsable:</strong>
         @Model.TechnicianName
     </p>
 
     <p>
-        <strong>Supervisor:</strong>
+        <strong>Supervisor responsable:</strong>
         @Model.SupervisorName
     </p>
 
     <hr />
 
     <h5>Descripción del servicio</h5>
+
     <p style="white-space: pre-wrap;">@Model.Description</p>
+
 </div>
 
+<!-- TÉCNICO: INICIAR TRABAJO -->
 @if (Model.CanStart)
 {
     <div class="panel-card mb-4">
+
         <h4>Iniciar intervención</h4>
 
         <p>
-            Confirma que vas a comenzar el trabajo
-            correspondiente a esta orden.
+            Confirma el inicio del trabajo asignado.
         </p>
 
-        <form asp-action="Start"
+        <form asp-controller="WorkOrders"
+              asp-action="Start"
               asp-route-id="@Model.Id"
               method="post">
+
             @Html.AntiForgeryToken()
 
             <button type="submit" class="btn btn-info">
                 Iniciar trabajo
             </button>
+
         </form>
+
     </div>
 }
 
+<!-- OBSERVACIONES DEL SUPERVISOR -->
+@if (!string.IsNullOrWhiteSpace(Model.ReviewFeedback))
+{
+    <div class="alert alert-warning">
+
+        <h5>Correcciones solicitadas</h5>
+
+        <p style="white-space: pre-wrap;">@Model.ReviewFeedback</p>
+
+    </div>
+}
+
+<!-- TÉCNICO: INFORME -->
 @if (Model.CanSubmit)
 {
     <div class="panel-card mb-4">
+
         <h4>Informe técnico</h4>
 
-        <form asp-action="SubmitForReview"
+        <form asp-controller="WorkOrders"
+              asp-action="SubmitForReview"
               method="post">
 
             @Html.AntiForgeryToken()
@@ -91,8 +121,8 @@
                    value="@Model.Id" />
 
             <div class="mb-3">
-                <label for="Diagnosis"
-                       class="form-label">
+
+                <label for="Diagnosis" class="form-label">
                     Diagnóstico
                 </label>
 
@@ -102,11 +132,12 @@
                           rows="4"
                           maxlength="4000"
                           required>@Model.Diagnosis</textarea>
+
             </div>
 
             <div class="mb-3">
-                <label for="WorkPerformed"
-                       class="form-label">
+
+                <label for="WorkPerformed" class="form-label">
                     Trabajo realizado
                 </label>
 
@@ -116,30 +147,129 @@
                           rows="5"
                           maxlength="4000"
                           required>@Model.WorkPerformed</textarea>
+
             </div>
 
             <button type="submit" class="btn btn-success">
                 Enviar para revisión
             </button>
+
         </form>
+
     </div>
 }
 
+<!-- INFORME REGISTRADO -->
 @if (!string.IsNullOrWhiteSpace(Model.Diagnosis) ||
      !string.IsNullOrWhiteSpace(Model.WorkPerformed))
 {
     <div class="panel-card mb-4">
-        <h4>Informe registrado</h4>
 
-        <h5>Diagnóstico</h5>
+        <h4>Informe de intervención</h4>
+
+        <h5>Diagnóstico técnico</h5>
+
         <p style="white-space: pre-wrap;">@Model.Diagnosis</p>
 
+        <hr />
+
         <h5>Trabajo realizado</h5>
+
         <p style="white-space: pre-wrap;">@Model.WorkPerformed</p>
+
     </div>
 }
 
-<a asp-action="Index"
+<!-- SUPERVISOR: APROBACIÓN O CORRECCIONES -->
+@if (Model.CanApprove || Model.CanRequestChanges)
+{
+    <div class="panel-card mb-4">
+
+        <h4>Evaluación del supervisor</h4>
+
+        <p>
+            Revise el diagnóstico y las actividades
+            realizadas antes de tomar una decisión.
+        </p>
+
+        @if (Model.CanApprove)
+        {
+            <form asp-controller="WorkOrders"
+                  asp-action="Approve"
+                  asp-route-id="@Model.Id"
+                  method="post"
+                  class="mb-4">
+
+                @Html.AntiForgeryToken()
+
+                <button type="submit"
+                        class="btn btn-success">
+                    Aprobar y cerrar orden
+                </button>
+
+            </form>
+        }
+
+        @if (Model.CanRequestChanges)
+        {
+            <hr />
+
+            <h5>Solicitar correcciones</h5>
+
+            <form asp-controller="WorkOrders"
+                  asp-action="RequestChanges"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden"
+                       name="Id"
+                       value="@Model.Id" />
+
+                <div class="mb-3">
+
+                    <label for="Feedback"
+                           class="form-label">
+                        Observaciones del supervisor
+                    </label>
+
+                    <textarea id="Feedback"
+                              name="Feedback"
+                              class="form-control"
+                              rows="4"
+                              maxlength="2000"
+                              required></textarea>
+
+                </div>
+
+                <button type="submit"
+                        class="btn btn-warning">
+                    Devolver al técnico para correcciones
+                </button>
+
+            </form>
+        }
+
+    </div>
+}
+
+<!-- ORDEN CERRADA -->
+@if (Model.Status ==
+     RefrigeracionControl.Domain.Enums.WorkOrderStatus.Completed)
+{
+    <div class="alert alert-success">
+
+        <strong>Orden finalizada</strong>
+
+        <p class="mb-0">
+            Esta orden fue aprobada y cerrada.
+        </p>
+
+    </div>
+}
+
+<a asp-controller="WorkOrders"
+   asp-action="Index"
    class="btn btn-outline-secondary">
     Volver a las órdenes
 </a>

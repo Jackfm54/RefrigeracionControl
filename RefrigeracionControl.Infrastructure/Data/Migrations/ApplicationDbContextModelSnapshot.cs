@@ -205,6 +205,10 @@ namespace RefrigeracionControl.Infrastructure.Data.Migrations
                     b.Property<string>("Diagnosis")
                         .HasColumnType("text");
 
+                    b.Property<string>("ReviewFeedback")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
                     b.Property<DateTime?>("ScheduledAtUtc")
                         .HasColumnType("timestamp with time zone");
 

@@ -1,16 +1,24 @@
 
+@model RefrigeracionControl.Web.ViewModels.DashboardViewModel
+
+@using RefrigeracionControl.Domain.Enums
+
 @{
     ViewData["Title"] = "Dashboard";
+
+    var activeOrders =
+        Model.PendingOrders +
+        Model.AssignedOrders +
+        Model.InProgressOrders +
+        Model.UnderReviewOrders;
 }
 
 <div class="dashboard-heading">
     <h2>Resumen de operaciones</h2>
-    <p>
-        Bienvenido al centro de control de servicios
-        y mantenimiento de refrigeración.
-    </p>
+    <p>@Model.DashboardScope</p>
 </div>
 
+<!-- INDICADORES PRINCIPALES -->
 <div class="metrics-grid">
 
     <div class="metric-card">
@@ -19,76 +27,302 @@
             <span class="metric-symbol">▤</span>
         </div>
 
-        <div class="metric-number">0</div>
+        <div class="metric-number">@activeOrders</div>
+
         <div class="metric-footer">
-            Sin datos registrados
+            Pendientes, asignadas, en ejecución
+            y en revisión
         </div>
     </div>
 
     <div class="metric-card">
         <div class="d-flex justify-content-between">
-            <span class="metric-label">Clientes</span>
-            <span class="metric-symbol">♙</span>
+            <span class="metric-label">Órdenes pendientes</span>
+            <span class="metric-symbol">◷</span>
         </div>
 
-        <div class="metric-number">0</div>
+        <div class="metric-number">
+            @Model.PendingOrders
+        </div>
+
         <div class="metric-footer">
-            Sin clientes registrados
+            Sin técnico asignado
         </div>
     </div>
 
     <div class="metric-card">
         <div class="d-flex justify-content-between">
-            <span class="metric-label">Equipos</span>
-            <span class="metric-symbol">❄</span>
-        </div>
-
-        <div class="metric-number">0</div>
-        <div class="metric-footer">
-            Sin equipos registrados
-        </div>
-    </div>
-
-    <div class="metric-card">
-        <div class="d-flex justify-content-between">
-            <span class="metric-label">Técnicos activos</span>
+            <span class="metric-label">En ejecución</span>
             <span class="metric-symbol">⚒</span>
         </div>
 
-        <div class="metric-number">0</div>
+        <div class="metric-number">
+            @Model.InProgressOrders
+        </div>
+
         <div class="metric-footer">
-            Sin datos disponibles
+            Intervenciones en curso
         </div>
     </div>
 
+    <div class="metric-card">
+        <div class="d-flex justify-content-between">
+            <span class="metric-label">En revisión</span>
+            <span class="metric-symbol">◉</span>
+        </div>
+
+        <div class="metric-number">
+            @Model.UnderReviewOrders
+        </div>
+
+        <div class="metric-footer">
+            Esperando aprobación del supervisor
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="d-flex justify-content-between">
+            <span class="metric-label">Órdenes asignadas</span>
+            <span class="metric-symbol">♙</span>
+        </div>
+
+        <div class="metric-number">
+            @Model.AssignedOrders
+        </div>
+
+        <div class="metric-footer">
+            Pendientes de iniciar intervención
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="d-flex justify-content-between">
+            <span class="metric-label">Finalizadas</span>
+            <span class="metric-symbol">✓</span>
+        </div>
+
+        <div class="metric-number">
+            @Model.CompletedOrders
+        </div>
+
+        <div class="metric-footer">
+            Órdenes aprobadas y cerradas
+        </div>
+    </div>
+
+    @if (User.IsInRole("Administrador") ||
+         User.IsInRole("Supervisor"))
+    {
+        <div class="metric-card">
+            <div class="d-flex justify-content-between">
+                <span class="metric-label">
+                    Técnicos activos
+                </span>
+                <span class="metric-symbol">⚒</span>
+            </div>
+
+            <div class="metric-number">
+                @Model.ActiveTechnicians
+            </div>
+
+            <div class="metric-footer">
+                @(User.IsInRole("Administrador")
+                    ? "Técnicos activos de la empresa"
+                    : "Técnicos activos de mi equipo")
+            </div>
+        </div>
+    }
+
+    @if (User.IsInRole("Administrador"))
+    {
+        <div class="metric-card">
+            <div class="d-flex justify-content-between">
+                <span class="metric-label">
+                    Supervisores activos
+                </span>
+                <span class="metric-symbol">♙</span>
+            </div>
+
+            <div class="metric-number">
+                @Model.ActiveSupervisors
+            </div>
+
+            <div class="metric-footer">
+                Supervisores registrados y habilitados
+            </div>
+        </div>
+    }
+
 </div>
 
+<!-- PANELES INFERIORES -->
 <div class="dashboard-panels">
 
     <section class="panel-card">
-        <h3>Últimas órdenes de servicio</h3>
+        <h3>Estado de las órdenes de servicio</h3>
 
-        <div class="empty-state">
-            <span class="metric-symbol">▤</span>
-            <strong>No hay órdenes registradas</strong>
-            <p>
-                Cuando implementemos el módulo de
-                órdenes, aparecerán aquí los servicios
-                y mantenimientos recientes.
-            </p>
+        @if (Model.TotalOrders == 0)
+        {
+            <div class="empty-state">
+                <span class="metric-symbol">▤</span>
+
+                <strong>
+                    No hay órdenes registradas
+                </strong>
+
+                <p>
+                    Las órdenes aparecerán aquí cuando
+                    se registren en el sistema.
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="module-row">
+                <div>
+                    <strong>Total de órdenes</strong>
+                    <br />
+                    <small>Órdenes visibles para tu rol</small>
+                </div>
+                <strong>@Model.TotalOrders</strong>
+            </div>
+
+            <div class="module-row">
+                <div>
+                    <strong>Asignadas</strong>
+                    <br />
+                    <small>Esperando inicio</small>
+                </div>
+                <strong>@Model.AssignedOrders</strong>
+            </div>
+
+            <div class="module-row">
+                <div>
+                    <strong>En ejecución</strong>
+                    <br />
+                    <small>Trabajos en curso</small>
+                </div>
+                <strong>@Model.InProgressOrders</strong>
+            </div>
+
+            <div class="module-row">
+                <div>
+                    <strong>En revisión</strong>
+                    <br />
+                    <small>Pendientes de evaluación</small>
+                </div>
+                <strong>@Model.UnderReviewOrders</strong>
+            </div>
+
+            <div class="module-row">
+                <div>
+                    <strong>Finalizadas</strong>
+                    <br />
+                    <small>Aprobadas y cerradas</small>
+                </div>
+                <strong>@Model.CompletedOrders</strong>
+            </div>
+
+            <div class="module-row">
+                <div>
+                    <strong>Canceladas</strong>
+                    <br />
+                    <small>Órdenes anuladas</small>
+                </div>
+                <strong>@Model.CancelledOrders</strong>
+            </div>
+        }
+
+        <div class="mt-4">
+            <a asp-controller="WorkOrders"
+               asp-action="Index"
+               class="btn btn-info">
+                Ver órdenes de servicio
+            </a>
         </div>
     </section>
 
     <section class="panel-card">
         <h3>Módulos del sistema</h3>
 
+        @if (User.IsInRole("Administrador"))
+        {
+            <div class="module-row">
+                <div>
+                    <strong>Gestión de usuarios</strong>
+                    <br />
+                    <small>Empleados y permisos</small>
+                </div>
+
+                <a asp-controller="Users"
+                   asp-action="Index"
+                   class="btn btn-sm btn-outline-info">
+                    Abrir
+                </a>
+            </div>
+
+            <div class="module-row">
+                <div>
+                    <strong>Asignaciones</strong>
+                    <br />
+                    <small>Técnicos y supervisores</small>
+                </div>
+
+                <a asp-controller="Assignments"
+                   asp-action="Create"
+                   class="btn btn-sm btn-outline-info">
+                    Abrir
+                </a>
+            </div>
+        }
+
+        @if (User.IsInRole("Administrador") ||
+             User.IsInRole("Supervisor"))
+        {
+            <div class="module-row">
+                <div>
+                    <strong>Técnicos</strong>
+                    <br />
+                    <small>Personal de mantenimiento</small>
+                </div>
+
+                <a asp-controller="Technicians"
+                   asp-action="Index"
+                   class="btn btn-sm btn-outline-info">
+                    Abrir
+                </a>
+            </div>
+        }
+
+        @if (User.IsInRole("Tecnico"))
+        {
+            <div class="module-row">
+                <div>
+                    <strong>Mi supervisor</strong>
+                    <br />
+                    <small>Responsable asignado</small>
+                </div>
+
+                <a asp-controller="MySupervisor"
+                   asp-action="Index"
+                   class="btn btn-sm btn-outline-info">
+                    Abrir
+                </a>
+            </div>
+        }
+
         <div class="module-row">
             <div>
-                <strong>Gestión de usuarios</strong>
+                <strong>Órdenes de servicio</strong>
                 <br />
-                <small>Empleados y permisos</small>
+                <small>Mantenimientos y reparaciones</small>
             </div>
-            <span class="coming-soon">Próximamente</span>
+
+            <a asp-controller="WorkOrders"
+               asp-action="Index"
+               class="btn btn-sm btn-outline-info">
+                Abrir
+            </a>
         </div>
 
         <div class="module-row">
@@ -111,9 +345,9 @@
 
         <div class="module-row">
             <div>
-                <strong>Órdenes de servicio</strong>
+                <strong>Inventario</strong>
                 <br />
-                <small>Mantenimientos y reparaciones</small>
+                <small>Repuestos y materiales</small>
             </div>
             <span class="coming-soon">Próximamente</span>
         </div>

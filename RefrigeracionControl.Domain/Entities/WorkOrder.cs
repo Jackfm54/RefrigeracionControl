@@ -30,4 +30,7 @@ public class WorkOrder
     public string? Diagnosis { get; set; }
 
     public string? WorkPerformed { get; set; }
+
+    public string? ReviewFeedback { get; set; }
+
 }

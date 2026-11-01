@@ -31,7 +31,9 @@ public class ApplicationDbContext
 
 		builder.Entity<WorkOrder>(entity =>
 		{
-			entity.HasKey(x => x.Id);
+            entity.Property(x => x.ReviewFeedback)
+				  .HasMaxLength(2000);
+            entity.HasKey(x => x.Id);
 
 			entity.Property(x => x.Title)
 				.IsRequired()
