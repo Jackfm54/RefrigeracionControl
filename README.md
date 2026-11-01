@@ -42,5 +42,4 @@ Application web de gestion administrative et opérationnelle destinée aux entre
 
 Projet en cours de développement.
 
-## Estado
-Proyecto en desarrollo.
+
