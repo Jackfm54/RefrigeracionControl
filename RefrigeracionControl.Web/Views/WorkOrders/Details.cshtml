@@ -1,0 +1,145 @@
+
+@model RefrigeracionControl.Web.ViewModels.WorkOrderDetailsViewModel
+
+@{
+    ViewData["Title"] = "Detalle de orden";
+}
+
+<div class="dashboard-heading">
+    <h2>Orden OT-@Model.Id.ToString("D5")</h2>
+    <p>Detalle de la intervención técnica.</p>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Success"]
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Error"]
+    </div>
+}
+
+<div class="panel-card mb-4">
+    <h3>@Model.Title</h3>
+
+    <p>
+        <strong>Tipo:</strong> @Model.ServiceType
+    </p>
+
+    <p>
+        <strong>Estado:</strong>
+        <span class="badge bg-info text-dark">
+            @Model.Status
+        </span>
+    </p>
+
+    <p>
+        <strong>Técnico:</strong>
+        @Model.TechnicianName
+    </p>
+
+    <p>
+        <strong>Supervisor:</strong>
+        @Model.SupervisorName
+    </p>
+
+    <hr />
+
+    <h5>Descripción del servicio</h5>
+    <p style="white-space: pre-wrap;">@Model.Description</p>
+</div>
+
+@if (Model.CanStart)
+{
+    <div class="panel-card mb-4">
+        <h4>Iniciar intervención</h4>
+
+        <p>
+            Confirma que vas a comenzar el trabajo
+            correspondiente a esta orden.
+        </p>
+
+        <form asp-action="Start"
+              asp-route-id="@Model.Id"
+              method="post">
+            @Html.AntiForgeryToken()
+
+            <button type="submit" class="btn btn-info">
+                Iniciar trabajo
+            </button>
+        </form>
+    </div>
+}
+
+@if (Model.CanSubmit)
+{
+    <div class="panel-card mb-4">
+        <h4>Informe técnico</h4>
+
+        <form asp-action="SubmitForReview"
+              method="post">
+
+            @Html.AntiForgeryToken()
+
+            <input type="hidden"
+                   name="Id"
+                   value="@Model.Id" />
+
+            <div class="mb-3">
+                <label for="Diagnosis"
+                       class="form-label">
+                    Diagnóstico
+                </label>
+
+                <textarea id="Diagnosis"
+                          name="Diagnosis"
+                          class="form-control"
+                          rows="4"
+                          maxlength="4000"
+                          required>@Model.Diagnosis</textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="WorkPerformed"
+                       class="form-label">
+                    Trabajo realizado
+                </label>
+
+                <textarea id="WorkPerformed"
+                          name="WorkPerformed"
+                          class="form-control"
+                          rows="5"
+                          maxlength="4000"
+                          required>@Model.WorkPerformed</textarea>
+            </div>
+
+            <button type="submit" class="btn btn-success">
+                Enviar para revisión
+            </button>
+        </form>
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Diagnosis) ||
+     !string.IsNullOrWhiteSpace(Model.WorkPerformed))
+{
+    <div class="panel-card mb-4">
+        <h4>Informe registrado</h4>
+
+        <h5>Diagnóstico</h5>
+        <p style="white-space: pre-wrap;">@Model.Diagnosis</p>
+
+        <h5>Trabajo realizado</h5>
+        <p style="white-space: pre-wrap;">@Model.WorkPerformed</p>
+    </div>
+}
+
+<a asp-action="Index"
+   class="btn btn-outline-secondary">
+    Volver a las órdenes
+</a>

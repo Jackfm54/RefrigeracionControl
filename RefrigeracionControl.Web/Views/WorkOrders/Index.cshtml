@@ -18,15 +18,15 @@
 }
 
 <div class="panel-card">
-    <div class="d-flex justify-content-between
-                align-items-center mb-4">
 
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="mb-0">Listado de órdenes</h3>
 
         @if (User.IsInRole("Administrador") ||
              User.IsInRole("Supervisor"))
         {
-            <a asp-action="Create"
+            <a asp-controller="WorkOrders"
+               asp-action="Create"
                class="btn btn-info">
                 + Nueva orden
             </a>
@@ -35,6 +35,7 @@
 
     <div class="table-responsive">
         <table class="table table-hover align-middle">
+
             <thead>
                 <tr>
                     <th>Número</th>
@@ -43,6 +44,7 @@
                     <th>Técnico</th>
                     <th>Estado</th>
                     <th>Fecha</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
 
@@ -51,20 +53,35 @@
                 {
                     <tr>
                         <td>OT-@order.Id.ToString("D5")</td>
+
                         <td>@order.Title</td>
+
                         <td>@order.ServiceType</td>
+
                         <td>@order.TechnicianName</td>
+
                         <td>
                             <span class="badge bg-info text-dark">
                                 @order.Status
                             </span>
                         </td>
+
                         <td>
                             @order.CreatedAtUtc.ToString("yyyy-MM-dd")
+                        </td>
+
+                        <td>
+                            <a asp-controller="WorkOrders"
+                               asp-action="Details"
+                               asp-route-id="@order.Id"
+                               class="btn btn-sm btn-outline-info">
+                                Ver detalles
+                            </a>
                         </td>
                     </tr>
                 }
             </tbody>
+
         </table>
 
         @if (!Model.Any())
@@ -72,8 +89,8 @@
             <div class="empty-state">
                 <strong>No hay órdenes de servicio</strong>
                 <p>
-                    Las órdenes aparecerán aquí cuando
-                    se registren en el sistema.
+                    Las órdenes aparecerán aquí
+                    cuando se registren en el sistema.
                 </p>
             </div>
         }

@@ -223,4 +223,150 @@ public class WorkOrdersController : Controller
             })
             .ToList();
     }
+
+    [HttpGet]
+    public async Task<IActionResult> Details(int id)
+    {
+        var order = await _db.WorkOrders
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == id);
+
+        if (order == null)
+            return NotFound();
+
+        var userId = _users.GetUserId(User);
+
+        if (string.IsNullOrEmpty(userId))
+            return Challenge();
+
+        bool isAdmin = User.IsInRole("Administrador");
+
+        bool isSupervisor =
+            User.IsInRole("Supervisor") &&
+            order.SupervisorId == userId;
+
+        bool isTechnician =
+            User.IsInRole("Tecnico") &&
+            order.TechnicianId == userId;
+
+        if (!isAdmin && !isSupervisor && !isTechnician)
+            return NotFound();
+
+        var technician = order.TechnicianId == null
+            ? null
+            : await _users.FindByIdAsync(order.TechnicianId);
+
+        var supervisor = order.SupervisorId == null
+            ? null
+            : await _users.FindByIdAsync(order.SupervisorId);
+
+        var model = new WorkOrderDetailsViewModel
+        {
+            Id = order.Id,
+            Title = order.Title,
+            Description = order.Description,
+            ServiceType = order.ServiceType,
+            Status = order.Status,
+
+            TechnicianName =
+                technician?.FullName ?? "Sin asignar",
+
+            SupervisorName =
+                supervisor?.FullName ?? "Sin asignar",
+
+            Diagnosis = order.Diagnosis,
+            WorkPerformed = order.WorkPerformed,
+
+            CanStart = isTechnician &&
+                order.Status == WorkOrderStatus.Assigned,
+
+            CanSubmit = isTechnician &&
+                order.Status == WorkOrderStatus.InProgress
+        };
+
+        return View(model);
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "Tecnico")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Start(int id)
+    {
+        var userId = _users.GetUserId(User);
+
+        if (string.IsNullOrEmpty(userId))
+            return Challenge();
+
+        // La condición de usuario, estado e ID se comprueba
+        // de nuevo en PostgreSQL al actualizar.
+        var affected = await _db.WorkOrders
+            .Where(x =>
+                x.Id == id &&
+                x.TechnicianId == userId &&
+                x.Status == WorkOrderStatus.Assigned)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(
+                    x => x.Status,
+                    WorkOrderStatus.InProgress));
+
+        if (affected == 0)
+            return NotFound();
+
+        TempData["Success"] =
+            "Intervención iniciada correctamente.";
+
+        return RedirectToAction(
+            nameof(Details), new { id });
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "Tecnico")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SubmitForReview(
+        WorkOrderReportViewModel model)
+    {
+        var userId = _users.GetUserId(User);
+
+        if (string.IsNullOrEmpty(userId))
+            return Challenge();
+
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] =
+                "El diagnóstico y el trabajo realizado " +
+                "son obligatorios y deben tener " +
+                "como máximo 4000 caracteres.";
+
+            return RedirectToAction(
+                nameof(Details), new { id = model.Id });
+        }
+
+        // Una orden solo puede enviarse si pertenece al
+        // técnico autenticado y está en ejecución.
+        var affected = await _db.WorkOrders
+            .Where(x =>
+                x.Id == model.Id &&
+                x.TechnicianId == userId &&
+                x.Status == WorkOrderStatus.InProgress)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(
+                    x => x.Diagnosis,
+                    model.Diagnosis.Trim())
+                .SetProperty(
+                    x => x.WorkPerformed,
+                    model.WorkPerformed.Trim())
+                .SetProperty(
+                    x => x.Status,
+                    WorkOrderStatus.UnderReview));
+
+        if (affected == 0)
+            return NotFound();
+
+        TempData["Success"] =
+            "Informe enviado al supervisor para revisión.";
+
+        return RedirectToAction(
+            nameof(Details), new { id = model.Id });
+    }
+
 }
