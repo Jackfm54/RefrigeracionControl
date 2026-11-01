@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="RefrigeracionControl.Application/RefrigeracionControl.Application.csproj" />
+  <Project Path="RefrigeracionControl.Domain/RefrigeracionControl.Domain.csproj" />
+  <Project Path="RefrigeracionControl.Infrastructure/RefrigeracionControl.Infrastructure.csproj" />
+  <Project Path="RefrigeracionControl.Web/RefrigeracionControl.Web.csproj" />
+</Solution>

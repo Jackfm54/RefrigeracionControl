@@ -1,0 +1,77 @@
+
+@model IEnumerable<RefrigeracionControl.Web.ViewModels.TechnicianListViewModel>
+
+@{
+    ViewData["Title"] = "Técnicos activos";
+}
+@if (User.IsInRole("Administrador"))
+{
+    <div class="mb-4">
+        <a asp-controller="Assignments"
+           asp-action="Create"
+           class="btn btn-info">
+            + Asignar técnico a supervisor
+        </a>
+    </div>
+}
+<div class="dashboard-heading">
+    <h2>Técnicos activos</h2>
+    <p>
+        Personal técnico disponible en el sistema
+        de refrigeración.
+    </p>
+</div>
+
+<div class="metrics-grid mb-4">
+    <div class="metric-card">
+        <span class="metric-label">
+            Técnicos registrados activos
+        </span>
+        <div class="metric-number">@Model.Count()</div>
+        <div class="metric-footer">
+            Cuentas activas con rol Técnico
+        </div>
+    </div>
+</div>
+
+<div class="panel-card">
+    <h3>Directorio de técnicos</h3>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Nombre completo</th>
+                    <th>Correo electrónico</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var technician in Model)
+                {
+                    <tr>
+                        <td>@technician.FullName</td>
+                        <td>@technician.Email</td>
+                        <td>
+                            <span class="badge bg-success">
+                                Activo
+                            </span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (!Model.Any())
+        {
+            <div class="empty-state">
+                <strong>No hay técnicos activos</strong>
+                <p>
+                    Todavía no existen cuentas técnicas
+                    activas en el sistema.
+                </p>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,224 @@
+﻿
+@using Microsoft.AspNetCore.Identity
+@using RefrigeracionControl.Infrastructure.Identity
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    var currentUser = User.Identity?.IsAuthenticated == true
+        ? await UserManager.GetUserAsync(User)
+        : null;
+
+    var displayName = currentUser?.FullName
+        ?? User.Identity?.Name
+        ?? "Usuario";
+
+    var isAdmin = User.IsInRole("Administrador");
+}
+
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1" />
+
+    <title>@ViewData["Title"] - RefrigeracionControl</title>
+
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/site.css"
+          asp-append-version="true" />
+</head>
+<body>
+
+<div class="app-shell">
+
+    <aside id="sidebar" class="sidebar">
+
+        <a asp-controller="Dashboard"
+           asp-action="Index"
+           class="brand">
+            <span class="brand-icon">❄</span>
+            <span>
+                <strong>REFRIGERACIÓN</strong>
+                <small>CONTROL</small>
+            </span>
+        </a>
+
+        <div class="sidebar-label">PRINCIPAL</div>
+
+        <nav class="sidebar-nav"
+             aria-label="Navegación principal">
+
+            <a asp-controller="Dashboard"
+               asp-action="Index"
+               class="nav-item-custom">
+                <span>▦</span>
+                Dashboard
+            </a>
+
+            <div class="sidebar-label">OPERACIONES</div>
+
+            <span class="nav-item-custom nav-disabled">
+                <span>♙</span>
+                Clientes
+            </span>
+
+            <span class="nav-item-custom nav-disabled">
+                <span>❄</span>
+                Equipos
+            </span>
+
+            <a asp-controller="WorkOrders"
+           asp-action="Index"
+           class="nav-item-custom">
+            <span>▤</span>
+            Órdenes de servicio
+           </a>
+
+           @if (User.IsInRole("Administrador") ||
+                     User.IsInRole("Supervisor"))
+                {
+                    <a asp-controller="Technicians"
+                       asp-action="Index"
+                       class="nav-item-custom">
+                        <span>⚒</span>
+                        Técnicos activos
+                    </a>
+                }
+
+            <span class="nav-item-custom nav-disabled">
+                <span>▣</span>
+                Inventario
+            </span>
+
+            @if (isAdmin)
+            
+            {
+                <div class="sidebar-label">
+                    ADMINISTRACIÓN
+                </div>
+
+                <a asp-controller="Users"
+                   asp-action="Index"
+                   class="nav-item-custom">
+                    <span>⚙</span>
+                    Usuarios y roles
+                </a>
+            }
+
+            
+            @if (User.IsInRole("Tecnico"))
+            {
+                <div class="sidebar-label">
+                    MI EQUIPO
+                </div>
+
+                <a asp-controller="MySupervisor"
+                   asp-action="Index"
+                   class="nav-item-custom">
+                    <span>♙</span>
+                    Mi supervisor
+                </a>
+            }
+
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="status-dot"></div>
+            Sistema operativo
+            <small>Versión 1.0</small>
+        </div>
+
+    </aside>
+
+    <div id="sidebarOverlay"
+         class="sidebar-overlay"></div>
+
+    <div class="main-wrapper">
+
+        <header class="topbar">
+
+            <div class="topbar-left">
+                <button id="menuToggle"
+                        class="icon-button"
+                        type="button"
+                        aria-label="Abrir menú"
+                        aria-controls="sidebar"
+                        aria-expanded="false">
+                    ☰
+                </button>
+
+                <div>
+                    <span class="topbar-caption">
+                        PANEL ADMINISTRATIVO
+                    </span>
+                    <h1 class="topbar-title">
+                        @ViewData["Title"]
+                    </h1>
+                </div>
+            </div>
+
+            <div class="topbar-actions">
+
+                <button id="themeToggle"
+                        type="button"
+                        class="icon-button"
+                        aria-label="Cambiar tema">
+                    ◐
+                </button>
+
+                <div class="user-info">
+                    <div class="user-avatar">
+                        @(displayName.Length > 0
+                            ? displayName.Substring(0, 1).ToUpper()
+                            : "U")
+                    </div>
+                    <div class="user-description">
+                        <strong>@displayName</strong>
+                        <small>
+                            @(isAdmin ? "Administrador" : "Usuario")
+                        </small>
+                    </div>
+                </div>
+
+                <form asp-controller="Account"
+                      asp-action="Logout"
+                      method="post">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit"
+                            class="logout-button">
+                        Salir
+                    </button>
+                </form>
+
+            </div>
+        </header>
+
+        <main class="main-content">
+            @RenderBody()
+        </main>
+
+        <footer class="app-footer">
+            © @DateTime.Now.Year RefrigeracionControl
+            <span>Sistema de gestión técnica</span>
+        </footer>
+
+    </div>
+</div>
+
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"
+        asp-append-version="true"></script>
+
+<script src="~/js/site.js"
+        asp-append-version="true"></script>
+
+@await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

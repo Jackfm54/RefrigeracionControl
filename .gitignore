@@ -1,0 +1,42 @@
+﻿# .NET
+**/bin/
+**/obj/
+.vs/
+*.user
+*.suo
+
+# Configuracion local y secretos
+.env
+.env.*
+!.env.example
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/secrets.json
+*.pfx
+*.p12
+*.key
+*.pem
+
+# Logs
+*.log
+logs/
+Logs/
+
+# Backups
+*.bak
+*.backup
+*.dump
+*.sql.gz
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Pruebas
+TestResults/
+coverage/
+coverage-report/
+
+# Publicacion
+publish/
+artifacts/

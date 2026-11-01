@@ -1,0 +1,123 @@
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="dashboard-heading">
+    <h2>Resumen de operaciones</h2>
+    <p>
+        Bienvenido al centro de control de servicios
+        y mantenimiento de refrigeración.
+    </p>
+</div>
+
+<div class="metrics-grid">
+
+    <div class="metric-card">
+        <div class="d-flex justify-content-between">
+            <span class="metric-label">Órdenes activas</span>
+            <span class="metric-symbol">▤</span>
+        </div>
+
+        <div class="metric-number">0</div>
+        <div class="metric-footer">
+            Sin datos registrados
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="d-flex justify-content-between">
+            <span class="metric-label">Clientes</span>
+            <span class="metric-symbol">♙</span>
+        </div>
+
+        <div class="metric-number">0</div>
+        <div class="metric-footer">
+            Sin clientes registrados
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="d-flex justify-content-between">
+            <span class="metric-label">Equipos</span>
+            <span class="metric-symbol">❄</span>
+        </div>
+
+        <div class="metric-number">0</div>
+        <div class="metric-footer">
+            Sin equipos registrados
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="d-flex justify-content-between">
+            <span class="metric-label">Técnicos activos</span>
+            <span class="metric-symbol">⚒</span>
+        </div>
+
+        <div class="metric-number">0</div>
+        <div class="metric-footer">
+            Sin datos disponibles
+        </div>
+    </div>
+
+</div>
+
+<div class="dashboard-panels">
+
+    <section class="panel-card">
+        <h3>Últimas órdenes de servicio</h3>
+
+        <div class="empty-state">
+            <span class="metric-symbol">▤</span>
+            <strong>No hay órdenes registradas</strong>
+            <p>
+                Cuando implementemos el módulo de
+                órdenes, aparecerán aquí los servicios
+                y mantenimientos recientes.
+            </p>
+        </div>
+    </section>
+
+    <section class="panel-card">
+        <h3>Módulos del sistema</h3>
+
+        <div class="module-row">
+            <div>
+                <strong>Gestión de usuarios</strong>
+                <br />
+                <small>Empleados y permisos</small>
+            </div>
+            <span class="coming-soon">Próximamente</span>
+        </div>
+
+        <div class="module-row">
+            <div>
+                <strong>Clientes</strong>
+                <br />
+                <small>Empresas y contactos</small>
+            </div>
+            <span class="coming-soon">Próximamente</span>
+        </div>
+
+        <div class="module-row">
+            <div>
+                <strong>Equipos</strong>
+                <br />
+                <small>Activos de refrigeración</small>
+            </div>
+            <span class="coming-soon">Próximamente</span>
+        </div>
+
+        <div class="module-row">
+            <div>
+                <strong>Órdenes de servicio</strong>
+                <br />
+                <small>Mantenimientos y reparaciones</small>
+            </div>
+            <span class="coming-soon">Próximamente</span>
+        </div>
+
+    </section>
+
+</div>

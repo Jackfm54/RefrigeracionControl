@@ -1,0 +1,53 @@
+
+@model RefrigeracionControl.Web.ViewModels.SupervisorInfoViewModel
+
+@{
+    ViewData["Title"] = "Mi supervisor";
+}
+
+<div class="dashboard-heading">
+    <h2>Mi supervisor</h2>
+    <p>Consulta tu responsable de supervisión.</p>
+</div>
+
+<div class="panel-card" style="max-width: 700px;">
+
+    @if (Model.IsAssigned)
+    {
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="user-avatar">
+                @(string.IsNullOrWhiteSpace(Model.FullName)
+                    ? "S"
+                    : Model.FullName.Substring(0, 1).ToUpper())
+            </div>
+
+            <div>
+                <h3 class="mb-1">@Model.FullName</h3>
+                <span class="badge bg-success">
+                    Supervisor asignado
+                </span>
+            </div>
+        </div>
+
+        <div class="module-row">
+            <strong>Correo electrónico</strong>
+            <span>@Model.Email</span>
+        </div>
+
+        <div class="module-row">
+            <strong>Cargo</strong>
+            <span>Supervisor</span>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <strong>No tienes supervisor asignado</strong>
+            <p>
+                Comunícate con el administrador para
+                que te asigne un supervisor.
+            </p>
+        </div>
+    }
+
+</div>

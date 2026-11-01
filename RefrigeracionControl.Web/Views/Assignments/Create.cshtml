@@ -1,0 +1,92 @@
+
+@model RefrigeracionControl.Web.ViewModels.SupervisorAssignmentViewModel
+
+@{
+    ViewData["Title"] = "Asignar técnico";
+}
+
+<div class="dashboard-heading">
+    <h2>Asignación de técnicos</h2>
+    <p>
+        Asigna o reasigna un técnico activo
+        a un supervisor.
+    </p>
+</div>
+
+<div class="panel-card" style="max-width: 720px;">
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+    <form asp-controller="Assignments"
+          asp-action="Create"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <div asp-validation-summary="ModelOnly"
+             class="text-danger mb-3"></div>
+
+        <div class="mb-3">
+            <label asp-for="SupervisorId"
+                   class="form-label">
+                Supervisor
+            </label>
+
+            <select asp-for="SupervisorId"
+                    class="form-select">
+                <option value="">
+                    Seleccione un supervisor
+                </option>
+
+                @foreach (var supervisor in Model.Supervisors)
+                {
+                    <option value="@supervisor.Id">
+                        @supervisor.Name
+                    </option>
+                }
+            </select>
+
+            <span asp-validation-for="SupervisorId"
+                  class="text-danger"></span>
+        </div>
+
+        <div class="mb-4">
+            <label asp-for="TechnicianId"
+                   class="form-label">
+                Técnico
+            </label>
+
+            <select asp-for="TechnicianId"
+                    class="form-select">
+                <option value="">
+                    Seleccione un técnico
+                </option>
+
+                @foreach (var technician in Model.Technicians)
+                {
+                    <option value="@technician.Id">
+                        @technician.Name
+                    </option>
+                }
+            </select>
+
+            <span asp-validation-for="TechnicianId"
+                  class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-info">
+            Guardar asignación
+        </button>
+
+        <a asp-controller="Technicians"
+           asp-action="Index"
+           class="btn btn-outline-secondary">
+            Cancelar
+        </a>
+    </form>
+</div>
