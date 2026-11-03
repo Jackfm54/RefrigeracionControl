@@ -1,0 +1,61 @@
+@model IEnumerable<RefrigeracionControl.Domain.Entities.Client>
+
+@{
+    ViewData["Title"] = "Clientes";
+}
+
+<div class="dashboard-heading">
+    <h2>Clientes</h2>
+    <p>Gestión de empresas y contactos.</p>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Success"]
+    </div>
+}
+
+<div class="panel-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Listado de clientes</h3>
+        <a asp-action="Create" class="btn btn-info">
+            + Nuevo cliente
+        </a>
+    </div>
+
+<div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Contacto</th>
+                    <th>Teléfono</th>
+                    <th>Ciudad</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var client in Model)
+                {
+                    <tr>
+                        <td>@client.Name</td>
+                        <td>@client.ContactName</td>
+                        <td>@client.Phone</td>
+                        <td>@client.City</td>
+                        <td>
+                            @(client.IsActive ? "Activo" : "Inactivo")
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+@if (!Model.Any())
+    {
+        <div class="empty-state">
+            No hay clientes registrados.
+        </div>
+    }
+</div>

@@ -27,16 +27,15 @@ public class WorkOrdersController : Controller
         _users = users;
     }
 
-    // ==================================================
+    // =============================================
     // LISTADO DE ÓRDENES
-    // ==================================================
-
+    // =============================================
     [HttpGet]
     public async Task<IActionResult> Index()
     {
         var userId = _users.GetUserId(User);
 
-        if (string.IsNullOrEmpty(userId))
+        if (string.IsNullOrWhiteSpace(userId))
             return Challenge();
 
         var query = _db.WorkOrders.AsNoTracking();
@@ -47,13 +46,13 @@ public class WorkOrdersController : Controller
         }
         else if (User.IsInRole("Supervisor"))
         {
-            query = query.Where(
-                x => x.SupervisorId == userId);
+            query = query.Where(x =>
+                x.SupervisorId == userId);
         }
         else if (User.IsInRole("Tecnico"))
         {
-            query = query.Where(
-                x => x.TechnicianId == userId);
+            query = query.Where(x =>
+                x.TechnicianId == userId);
         }
         else
         {
@@ -87,64 +86,86 @@ public class WorkOrdersController : Controller
                         : "Sin asignar",
 
                 CreatedAtUtc = order.CreatedAtUtc
-
             }).ToList();
 
         return View(result);
     }
 
-    // ==================================================
-    // FORMULARIO DE CREACIÓN
-    // ==================================================
-
+    // =============================================
+    // NUEVA ORDEN - FORMULARIO
+    // =============================================
     [HttpGet]
     [Authorize(Roles = "Administrador,Supervisor")]
     public async Task<IActionResult> Create()
     {
-        var model = new WorkOrderCreateViewModel();
+        var input = new WorkOrderCreateViewModel();
 
-        await LoadTechnicians(model);
+        await LoadCreateOptions(input);
 
-        return View(model);
+        return View(input);
     }
 
-    // ==================================================
-    // GUARDAR NUEVA ORDEN
-    // ==================================================
-
+    // =============================================
+    // NUEVA ORDEN - GUARDAR
+    // =============================================
     [HttpPost]
     [Authorize(Roles = "Administrador,Supervisor")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(
-        WorkOrderCreateViewModel model)
+        WorkOrderCreateViewModel input)
     {
-        var allowedTypes = new[]
-        {
-            "Preventivo",
-            "Correctivo"
-        };
+        var userId = _users.GetUserId(User);
 
-        if (!allowedTypes.Contains(model.ServiceType))
+        if (string.IsNullOrWhiteSpace(userId))
+            return Challenge();
+
+        if (input.ServiceType != "Preventivo" &&
+            input.ServiceType != "Correctivo")
         {
             ModelState.AddModelError(
-                nameof(model.ServiceType),
-                "Tipo de servicio no permitido.");
+                nameof(input.ServiceType),
+                "Tipo de mantenimiento no permitido.");
         }
 
-        var currentUserId = _users.GetUserId(User);
+        var validClient = await _db.Clients
+            .AsNoTracking()
+            .AnyAsync(x =>
+                x.Id == input.ClientId &&
+                x.IsActive);
 
-        if (string.IsNullOrEmpty(currentUserId))
-            return Challenge();
+        if (!validClient)
+        {
+            ModelState.AddModelError(
+                nameof(input.ClientId),
+                "Seleccione un cliente activo válido.");
+        }
+
+        var validEquipment =
+            await _db.RefrigerationEquipments
+                .AsNoTracking()
+                .AnyAsync(x =>
+                    x.Id == input.EquipmentId &&
+                    x.ClientId == input.ClientId &&
+                    x.IsActive &&
+                    x.Client.IsActive);
+
+        if (!validEquipment)
+        {
+            ModelState.AddModelError(
+                nameof(input.EquipmentId),
+                "El equipo no pertenece al cliente " +
+                "seleccionado o está inactivo.");
+        }
 
         string? supervisorId =
             User.IsInRole("Supervisor")
-                ? currentUserId
+                ? userId
                 : null;
 
-        if (!string.IsNullOrWhiteSpace(model.TechnicianId))
+        if (!string.IsNullOrWhiteSpace(input.TechnicianId))
         {
             var technician = await _users.FindByIdAsync(
-                model.TechnicianId);
+                input.TechnicianId);
 
             if (technician == null ||
                 !technician.IsActive ||
@@ -152,25 +173,23 @@ public class WorkOrdersController : Controller
                     technician, "Tecnico"))
             {
                 ModelState.AddModelError(
-                    nameof(model.TechnicianId),
-                    "El técnico seleccionado no es válido.");
+                    nameof(input.TechnicianId),
+                    "Seleccione un técnico activo válido.");
             }
             else
             {
                 var assignment = await _db
                     .SupervisorTechnicianAssignments
                     .AsNoTracking()
-                    .SingleOrDefaultAsync(
-                        x => x.TechnicianId ==
-                             model.TechnicianId);
+                    .SingleOrDefaultAsync(x =>
+                        x.TechnicianId == input.TechnicianId);
 
                 if (User.IsInRole("Supervisor"))
                 {
-                    if (assignment?.SupervisorId !=
-                        currentUserId)
+                    if (assignment?.SupervisorId != userId)
                     {
                         ModelState.AddModelError(
-                            nameof(model.TechnicianId),
+                            nameof(input.TechnicianId),
                             "El técnico no pertenece a su equipo.");
                     }
                 }
@@ -183,66 +202,100 @@ public class WorkOrdersController : Controller
 
         if (!ModelState.IsValid)
         {
-            await LoadTechnicians(model);
-
-            return View(model);
+            await LoadCreateOptions(input);
+            return View(input);
         }
 
         var order = new WorkOrder
         {
-            Title = model.Title.Trim(),
+            Title = input.Title.Trim(),
+            Description = input.Description.Trim(),
+            ServiceType = input.ServiceType,
 
-            Description = model.Description.Trim(),
+            ClientId = input.ClientId,
+            EquipmentId = input.EquipmentId,
 
-            ServiceType = model.ServiceType,
-
-            TechnicianId = model.TechnicianId,
+            TechnicianId = string.IsNullOrWhiteSpace(
+                input.TechnicianId)
+                ? null
+                : input.TechnicianId,
 
             SupervisorId = supervisorId,
 
-            Status = string.IsNullOrEmpty(
-                model.TechnicianId)
+            Status = string.IsNullOrWhiteSpace(
+                input.TechnicianId)
                 ? WorkOrderStatus.Pending
                 : WorkOrderStatus.Assigned,
 
             CreatedAtUtc = DateTime.UtcNow,
 
-            ScheduledAtUtc =
-                model.ScheduledAt?.ToUniversalTime()
+            // Se conserva la conversión local usada
+            // anteriormente. Antes de producción se
+            // configurará la zona horaria de la empresa.
+            ScheduledAtUtc = input.ScheduledAt.HasValue
+                ? DateTime.SpecifyKind(
+                    input.ScheduledAt.Value,
+                    DateTimeKind.Local).ToUniversalTime()
+                : null
         };
 
         _db.WorkOrders.Add(order);
-
         await _db.SaveChangesAsync();
 
         TempData["Success"] =
-            "Orden de servicio creada correctamente.";
+            "Orden de servicio registrada correctamente.";
 
         return RedirectToAction(nameof(Index));
     }
 
-    // ==================================================
-    // DETALLE DE LA ORDEN
-    // ==================================================
+    // =============================================
+    // EQUIPOS DE UN CLIENTE - AJAX
+    // =============================================
+    [HttpGet]
+    [Authorize(Roles = "Administrador,Supervisor")]
+    public async Task<IActionResult> GetEquipments(int clientId)
+    {
+        if (clientId <= 0)
+        {
+            return Json(Array.Empty<object>());
+        }
 
+        var equipments = await _db.RefrigerationEquipments
+            .AsNoTracking()
+            .Where(x =>
+                x.ClientId == clientId &&
+                x.IsActive &&
+                x.Client.IsActive)
+            .OrderBy(x => x.Name)
+            .Select(x => new
+            {
+                id = x.Id,
+                name = x.Name + " - " + x.EquipmentType
+            })
+            .ToListAsync();
+
+        return Json(equipments);
+    }
+
+    // =============================================
+    // DETALLE DE LA ORDEN
+    // =============================================
     [HttpGet]
     public async Task<IActionResult> Details(int id)
     {
         var order = await _db.WorkOrders
             .AsNoTracking()
-            .SingleOrDefaultAsync(
-                x => x.Id == id);
+            .SingleOrDefaultAsync(x => x.Id == id);
 
         if (order == null)
             return NotFound();
 
         var userId = _users.GetUserId(User);
 
-        if (string.IsNullOrEmpty(userId))
+        if (string.IsNullOrWhiteSpace(userId))
             return Challenge();
 
-        var isAdmin =
-            User.IsInRole("Administrador");
+        var isAdmin = User.IsInRole("Administrador");
 
         var isSupervisor =
             User.IsInRole("Supervisor") &&
@@ -252,12 +305,8 @@ public class WorkOrdersController : Controller
             User.IsInRole("Tecnico") &&
             order.TechnicianId == userId;
 
-        if (!isAdmin &&
-            !isSupervisor &&
-            !isTechnician)
-        {
+        if (!isAdmin && !isSupervisor && !isTechnician)
             return NotFound();
-        }
 
         var technician = order.TechnicianId == null
             ? null
@@ -269,16 +318,26 @@ public class WorkOrdersController : Controller
             : await _users.FindByIdAsync(
                 order.SupervisorId);
 
+        var client = order.ClientId.HasValue
+            ? await _db.Clients
+                .AsNoTracking()
+                .SingleOrDefaultAsync(
+                    x => x.Id == order.ClientId.Value)
+            : null;
+
+        var equipment = order.EquipmentId.HasValue
+            ? await _db.RefrigerationEquipments
+                .AsNoTracking()
+                .SingleOrDefaultAsync(
+                    x => x.Id == order.EquipmentId.Value)
+            : null;
+
         var model = new WorkOrderDetailsViewModel
         {
             Id = order.Id,
-
             Title = order.Title,
-
             Description = order.Description,
-
             ServiceType = order.ServiceType,
-
             Status = order.Status,
 
             TechnicianName =
@@ -287,40 +346,38 @@ public class WorkOrdersController : Controller
             SupervisorName =
                 supervisor?.FullName ?? "Sin asignar",
 
+            ClientName =
+                client?.Name ?? "No registrado",
+
+            EquipmentName =
+                equipment?.Name ?? "No registrado",
+
+            EquipmentSerialNumber =
+                equipment?.SerialNumber ?? "",
+
             Diagnosis = order.Diagnosis,
-
             WorkPerformed = order.WorkPerformed,
-
             ReviewFeedback = order.ReviewFeedback,
 
-            CanStart =
-                isTechnician &&
-                order.Status ==
-                WorkOrderStatus.Assigned,
+            CanStart = isTechnician &&
+                order.Status == WorkOrderStatus.Assigned,
 
-            CanSubmit =
-                isTechnician &&
-                order.Status ==
-                WorkOrderStatus.InProgress,
+            CanSubmit = isTechnician &&
+                order.Status == WorkOrderStatus.InProgress,
 
-            CanApprove =
-                isSupervisor &&
-                order.Status ==
-                WorkOrderStatus.UnderReview,
+            CanApprove = isSupervisor &&
+                order.Status == WorkOrderStatus.UnderReview,
 
-            CanRequestChanges =
-                isSupervisor &&
-                order.Status ==
-                WorkOrderStatus.UnderReview
+            CanRequestChanges = isSupervisor &&
+                order.Status == WorkOrderStatus.UnderReview
         };
 
         return View(model);
     }
 
-    // ==================================================
-    // TÉCNICO: INICIAR TRABAJO
-    // ==================================================
-
+    // =============================================
+    // TÉCNICO - INICIAR INTERVENCIÓN
+    // =============================================
     [HttpPost]
     [Authorize(Roles = "Tecnico")]
     [ValidateAntiForgeryToken]
@@ -328,15 +385,14 @@ public class WorkOrdersController : Controller
     {
         var userId = _users.GetUserId(User);
 
-        if (string.IsNullOrEmpty(userId))
+        if (string.IsNullOrWhiteSpace(userId))
             return Challenge();
 
         var affected = await _db.WorkOrders
             .Where(x =>
                 x.Id == id &&
                 x.TechnicianId == userId &&
-                x.Status ==
-                WorkOrderStatus.Assigned)
+                x.Status == WorkOrderStatus.Assigned)
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(
                     x => x.Status,
@@ -353,48 +409,45 @@ public class WorkOrdersController : Controller
             new { id });
     }
 
-    // ==================================================
-    // TÉCNICO: ENVIAR INFORME A REVISIÓN
-    // ==================================================
-
+    // =============================================
+    // TÉCNICO - ENVIAR INFORME
+    // =============================================
     [HttpPost]
     [Authorize(Roles = "Tecnico")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SubmitForReview(
-        WorkOrderReportViewModel model)
+        WorkOrderReportViewModel input)
     {
         var userId = _users.GetUserId(User);
 
-        if (string.IsNullOrEmpty(userId))
+        if (string.IsNullOrWhiteSpace(userId))
             return Challenge();
 
         if (!ModelState.IsValid ||
-            string.IsNullOrWhiteSpace(model.Diagnosis) ||
-            string.IsNullOrWhiteSpace(model.WorkPerformed))
+            string.IsNullOrWhiteSpace(input.Diagnosis) ||
+            string.IsNullOrWhiteSpace(input.WorkPerformed))
         {
             TempData["Error"] =
-                "Debe completar el diagnóstico y " +
-                "el trabajo realizado (máximo " +
-                "4000 caracteres cada uno).";
+                "Complete el diagnóstico y el trabajo " +
+                "realizado (máximo 4000 caracteres cada uno).";
 
             return RedirectToAction(
                 nameof(Details),
-                new { id = model.Id });
+                new { id = input.Id });
         }
 
         var affected = await _db.WorkOrders
             .Where(x =>
-                x.Id == model.Id &&
+                x.Id == input.Id &&
                 x.TechnicianId == userId &&
-                x.Status ==
-                WorkOrderStatus.InProgress)
+                x.Status == WorkOrderStatus.InProgress)
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(
                     x => x.Diagnosis,
-                    model.Diagnosis.Trim())
+                    input.Diagnosis.Trim())
                 .SetProperty(
                     x => x.WorkPerformed,
-                    model.WorkPerformed.Trim())
+                    input.WorkPerformed.Trim())
                 .SetProperty(
                     x => x.Status,
                     WorkOrderStatus.UnderReview)
@@ -410,13 +463,12 @@ public class WorkOrdersController : Controller
 
         return RedirectToAction(
             nameof(Details),
-            new { id = model.Id });
+            new { id = input.Id });
     }
 
-    // ==================================================
-    // SUPERVISOR: APROBAR Y CERRAR ORDEN
-    // ==================================================
-
+    // =============================================
+    // SUPERVISOR - APROBAR Y CERRAR
+    // =============================================
     [HttpPost]
     [Authorize(Roles = "Supervisor")]
     [ValidateAntiForgeryToken]
@@ -424,16 +476,15 @@ public class WorkOrdersController : Controller
     {
         var supervisorId = _users.GetUserId(User);
 
-        if (string.IsNullOrEmpty(supervisorId))
+        if (string.IsNullOrWhiteSpace(supervisorId))
             return Challenge();
 
         var affected = await _db.WorkOrders
             .Where(x =>
                 x.Id == id &&
                 x.SupervisorId == supervisorId &&
-                x.Status ==
-                WorkOrderStatus.UnderReview &&
-                x.TechnicianId != null)
+                x.TechnicianId != null &&
+                x.Status == WorkOrderStatus.UnderReview)
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(
                     x => x.Status,
@@ -456,47 +507,45 @@ public class WorkOrdersController : Controller
             new { id });
     }
 
-    // ==================================================
-    // SUPERVISOR: SOLICITAR CORRECCIONES
-    // ==================================================
-
+    // =============================================
+    // SUPERVISOR - SOLICITAR CORRECCIONES
+    // =============================================
     [HttpPost]
     [Authorize(Roles = "Supervisor")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RequestChanges(
-        WorkOrderReviewViewModel model)
+        WorkOrderReviewViewModel input)
     {
         var supervisorId = _users.GetUserId(User);
 
-        if (string.IsNullOrEmpty(supervisorId))
+        if (string.IsNullOrWhiteSpace(supervisorId))
             return Challenge();
 
         if (!ModelState.IsValid ||
-            string.IsNullOrWhiteSpace(model.Feedback))
+            string.IsNullOrWhiteSpace(input.Feedback))
         {
             TempData["Error"] =
-                "Debe indicar las correcciones solicitadas " +
+                "Ingrese las correcciones solicitadas " +
                 "(máximo 2000 caracteres).";
 
             return RedirectToAction(
                 nameof(Details),
-                new { id = model.Id });
+                new { id = input.Id });
         }
 
         var affected = await _db.WorkOrders
             .Where(x =>
-                x.Id == model.Id &&
+                x.Id == input.Id &&
                 x.SupervisorId == supervisorId &&
-                x.Status ==
-                WorkOrderStatus.UnderReview &&
-                x.TechnicianId != null)
+                x.TechnicianId != null &&
+                x.Status == WorkOrderStatus.UnderReview)
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(
                     x => x.Status,
                     WorkOrderStatus.InProgress)
                 .SetProperty(
                     x => x.ReviewFeedback,
-                    model.Feedback.Trim()));
+                    input.Feedback.Trim()));
 
         if (affected == 0)
             return NotFound();
@@ -506,20 +555,19 @@ public class WorkOrdersController : Controller
 
         return RedirectToAction(
             nameof(Details),
-            new { id = model.Id });
+            new { id = input.Id });
     }
 
-    // ==================================================
-    // LISTA DE TÉCNICOS SEGÚN EL ROL
-    // ==================================================
-
+    // =============================================
+    // CARGAR TÉCNICOS SEGÚN EL ROL
+    // =============================================
     private async Task LoadTechnicians(
-        WorkOrderCreateViewModel model)
+        WorkOrderCreateViewModel input)
     {
         var technicians = await _users
             .GetUsersInRoleAsync("Tecnico");
 
-        var active = technicians
+        var activeTechnicians = technicians
             .Where(x => x.IsActive);
 
         if (User.IsInRole("Supervisor"))
@@ -534,11 +582,11 @@ public class WorkOrdersController : Controller
                 .Select(x => x.TechnicianId)
                 .ToListAsync();
 
-            active = active.Where(
-                x => assignedIds.Contains(x.Id));
+            activeTechnicians = activeTechnicians
+                .Where(x => assignedIds.Contains(x.Id));
         }
 
-        model.Technicians = active
+        input.Technicians = activeTechnicians
             .OrderBy(x => x.FullName)
             .Select(x => new SelectListItem
             {
@@ -546,5 +594,50 @@ public class WorkOrdersController : Controller
                 Text = x.FullName
             })
             .ToList();
+    }
+
+    // =============================================
+    // CARGAR TODAS LAS OPCIONES DEL FORMULARIO
+    // =============================================
+    private async Task LoadCreateOptions(
+        WorkOrderCreateViewModel input)
+    {
+        await LoadTechnicians(input);
+
+        input.Clients = await _db.Clients
+            .AsNoTracking()
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.Name)
+            .Select(x => new SelectListItem
+            {
+                Value = x.Id.ToString(),
+                Text = x.Name
+            })
+            .ToListAsync();
+
+        // Solo cargar los equipos del cliente elegido.
+        // Al abrir el formulario, la selección está vacía.
+        input.Equipments = await _db
+            .RefrigerationEquipments
+            .AsNoTracking()
+            .Where(x =>
+                x.IsActive &&
+                x.Client.IsActive &&
+                x.ClientId == input.ClientId)
+            .OrderBy(x => x.Name)
+            .Select(x => new SelectListItem
+            {
+                Value = x.Id.ToString(),
+                Text = x.Name + " - " + x.EquipmentType
+            })
+            .ToListAsync();
+
+        // Diagnóstico temporal: retirar tras las pruebas.
+        Console.WriteLine(
+            $"Clientes cargados: {input.Clients.Count}");
+        Console.WriteLine(
+            $"Equipos del cliente cargados: {input.Equipments.Count}");
+        Console.WriteLine(
+            $"Técnicos cargados: {input.Technicians.Count}");
     }
 }

@@ -5,6 +5,30 @@
     ViewData["Title"] = "Detalle de orden";
 }
 
+
+<hr />
+
+<h5>Cliente y equipo</h5>
+
+<p>
+    <strong>Cliente:</strong>
+    @Model.ClientName
+</p>
+
+<p>
+    <strong>Equipo:</strong>
+    @Model.EquipmentName
+</p>
+
+@if (!string.IsNullOrWhiteSpace(Model.EquipmentSerialNumber))
+{
+    <p>
+        <strong>Número de serie:</strong>
+        @Model.EquipmentSerialNumber
+    </p>
+}
+
+
 <div class="dashboard-heading">
     <h2>Orden OT-@Model.Id.ToString("D5")</h2>
     <p>Detalle y seguimiento de la intervención técnica.</p>

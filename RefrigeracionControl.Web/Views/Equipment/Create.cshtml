@@ -1,0 +1,131 @@
+
+@model RefrigeracionControl.Web.ViewModels.EquipmentCreateViewModel
+
+@{
+    ViewData["Title"] = "Nuevo equipo";
+}
+
+<div class="dashboard-heading">
+    <h2>Registrar equipo</h2>
+    <p>Asociar un equipo de refrigeración a un cliente.</p>
+</div>
+
+<div class="panel-card" style="max-width:800px;">
+
+    <form asp-controller="Equipment"
+          asp-action="Create"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <div asp-validation-summary="All"
+             class="text-danger mb-3"></div>
+
+        <div class="mb-3">
+            <label asp-for="ClientId" class="form-label">
+                Cliente *
+            </label>
+
+            <select asp-for="ClientId"
+                    asp-items="Model.Clients"
+                    class="form-select">
+                <option value="0">Seleccione un cliente</option>
+            </select>
+
+            <span asp-validation-for="ClientId"
+                  class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Name" class="form-label">
+                Nombre del equipo *
+            </label>
+
+            <input asp-for="Name" class="form-control" />
+
+            <span asp-validation-for="Name"
+                  class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="EquipmentType" class="form-label">
+                Tipo de equipo *
+            </label>
+
+            <input asp-for="EquipmentType"
+                   class="form-control"
+                   placeholder="Ej. Cámara frigorífica" />
+
+            <span asp-validation-for="EquipmentType"
+                  class="text-danger"></span>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="Brand" class="form-label">
+                    Marca
+                </label>
+
+                <input asp-for="Brand" class="form-control" />
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label asp-for="Model" class="form-label">
+                    Modelo
+                </label>
+
+                <input asp-for="Model" class="form-control" />
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="SerialNumber" class="form-label">
+                Número de serie
+            </label>
+
+            <input asp-for="SerialNumber"
+                   class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Location" class="form-label">
+                Ubicación del equipo
+            </label>
+
+            <input asp-for="Location"
+                   class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="RefrigerantType" class="form-label">
+                Tipo de refrigerante
+            </label>
+
+            <input asp-for="RefrigerantType"
+                   class="form-control"
+                   placeholder="Ej. R-410A" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Notes" class="form-label">
+                Observaciones
+            </label>
+
+            <textarea asp-for="Notes"
+                      class="form-control"
+                      rows="3"></textarea>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-info">
+                Guardar equipo
+            </button>
+
+            <a asp-controller="Equipment"
+               asp-action="Index"
+               class="btn btn-outline-secondary">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>

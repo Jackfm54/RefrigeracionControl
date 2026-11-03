@@ -1,0 +1,92 @@
+
+@model IEnumerable<RefrigeracionControl.Domain.Entities.RefrigerationEquipment>
+
+@{
+    ViewData["Title"] = "Equipos de refrigeración";
+}
+
+<div class="dashboard-heading">
+    <h2>Equipos de refrigeración</h2>
+    <p>Gestión de equipos asociados a los clientes.</p>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Success"]
+    </div>
+}
+
+<div class="panel-card">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">Equipos registrados</h3>
+
+        <a asp-controller="Equipment"
+           asp-action="Create"
+           class="btn btn-info">
+            + Nuevo equipo
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Equipo</th>
+                    <th>Cliente</th>
+                    <th>Tipo</th>
+                    <th>Marca</th>
+                    <th>Modelo</th>
+                    <th>N.º de serie</th>
+                    <th>Ubicación</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var equipment in Model)
+                {
+                    <tr>
+                        <td>@equipment.Id</td>
+                        <td>@equipment.Name</td>
+                        <td>@equipment.Client.Name</td>
+                        <td>@equipment.EquipmentType</td>
+                        <td>@equipment.Brand</td>
+                        <td>@equipment.Model</td>
+                        <td>@equipment.SerialNumber</td>
+                        <td>@equipment.Location</td>
+                        <td>
+                            @if (equipment.IsActive)
+                            {
+                                <span class="badge bg-success">
+                                    Activo
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">
+                                    Inactivo
+                                </span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+
+        </table>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <strong>No hay equipos registrados</strong>
+            <p>
+                Registra el primer equipo de refrigeración
+                y asígnalo a un cliente.
+            </p>
+        </div>
+    }
+</div>

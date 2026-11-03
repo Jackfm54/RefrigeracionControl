@@ -32,5 +32,8 @@ public class WorkOrder
     public string? WorkPerformed { get; set; }
 
     public string? ReviewFeedback { get; set; }
+    public int? ClientId { get; set; }
+
+    public int? EquipmentId { get; set; }
 
 }

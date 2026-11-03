@@ -62,15 +62,23 @@
 
             <div class="sidebar-label">OPERACIONES</div>
 
-            <span class="nav-item-custom nav-disabled">
-                <span>♙</span>
-                Clientes
-            </span>
+                        @if (User.IsInRole("Administrador") ||
+                 User.IsInRole("Supervisor"))
+            {
+                <a asp-controller="Clients"
+                   asp-action="Index"
+                   class="nav-item-custom">
+                    <span>♙</span>
+                    Clientes
+                </a>
 
-            <span class="nav-item-custom nav-disabled">
-                <span>❄</span>
-                Equipos
-            </span>
+            <a asp-controller="Equipment"
+                   asp-action="Index"
+                   class="nav-item-custom">
+                    <span>❄</span>
+                    Equipos
+                </a>
+            }
 
             <a asp-controller="WorkOrders"
            asp-action="Index"

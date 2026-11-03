@@ -27,6 +27,13 @@ public class WorkOrderDetailsViewModel
     // Observaciones realizadas por el supervisor.
     public string? ReviewFeedback { get; set; }
 
+    public string ClientName { get; set; } = "No registrado";
+
+    public string EquipmentName { get; set; } = "No registrado";
+
+    public string EquipmentSerialNumber { get; set; } = "";
+
+
     // Permisos para el técnico.
     public bool CanStart { get; set; }
 

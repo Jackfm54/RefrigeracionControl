@@ -154,6 +154,116 @@ namespace RefrigeracionControl.Infrastructure.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("RefrigeracionControl.Domain.Entities.Client", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("City")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("ContactName")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name");
+
+                    b.ToTable("Clients");
+                });
+
+            modelBuilder.Entity("RefrigeracionControl.Domain.Entities.RefrigerationEquipment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Brand")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("ClientId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EquipmentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Model")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(180)
+                        .HasColumnType("character varying(180)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("RefrigerantType")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("SerialNumber")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("SerialNumber");
+
+                    b.ToTable("RefrigerationEquipments");
+                });
+
             modelBuilder.Entity("RefrigeracionControl.Domain.Entities.SupervisorTechnicianAssignment", b =>
                 {
                     b.Property<int>("Id")
@@ -191,6 +301,9 @@ namespace RefrigeracionControl.Infrastructure.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("ClientId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("CompletedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -204,6 +317,9 @@ namespace RefrigeracionControl.Infrastructure.Data.Migrations
 
                     b.Property<string>("Diagnosis")
                         .HasColumnType("text");
+
+                    b.Property<int?>("EquipmentId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("ReviewFeedback")
                         .HasMaxLength(2000)
@@ -237,6 +353,10 @@ namespace RefrigeracionControl.Infrastructure.Data.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("EquipmentId");
 
                     b.HasIndex("Status");
 
@@ -372,6 +492,17 @@ namespace RefrigeracionControl.Infrastructure.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RefrigeracionControl.Domain.Entities.RefrigerationEquipment", b =>
+                {
+                    b.HasOne("RefrigeracionControl.Domain.Entities.Client", "Client")
+                        .WithMany("Equipments")
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Client");
+                });
+
             modelBuilder.Entity("RefrigeracionControl.Domain.Entities.SupervisorTechnicianAssignment", b =>
                 {
                     b.HasOne("RefrigeracionControl.Infrastructure.Identity.ApplicationUser", null)
@@ -389,6 +520,16 @@ namespace RefrigeracionControl.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("RefrigeracionControl.Domain.Entities.WorkOrder", b =>
                 {
+                    b.HasOne("RefrigeracionControl.Domain.Entities.Client", null)
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RefrigeracionControl.Domain.Entities.RefrigerationEquipment", null)
+                        .WithMany()
+                        .HasForeignKey("EquipmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("RefrigeracionControl.Infrastructure.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("SupervisorId")
@@ -398,6 +539,11 @@ namespace RefrigeracionControl.Infrastructure.Data.Migrations
                         .WithMany()
                         .HasForeignKey("TechnicianId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("RefrigeracionControl.Domain.Entities.Client", b =>
+                {
+                    b.Navigation("Equipments");
                 });
 #pragma warning restore 612, 618
         }

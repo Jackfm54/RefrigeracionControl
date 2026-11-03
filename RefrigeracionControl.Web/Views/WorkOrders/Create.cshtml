@@ -2,75 +2,275 @@
 @model RefrigeracionControl.Web.ViewModels.WorkOrderCreateViewModel
 
 @{
-    ViewData["Title"] = "Nueva orden";
+    ViewData["Title"] = "Nouvelle commande de service";
 }
 
 <div class="dashboard-heading">
-    <h2>Nueva orden de servicio</h2>
-    <p>Registrar una intervención de refrigeración.</p>
+    <h2>Nouvelle commande de service</h2>
+    <p>Enregistrez une intervention auprès d'un client et de son équipement.</p>
 </div>
 
-<div class="panel-card" style="max-width: 800px;">
+<div class="panel-card" style="max-width:850px;">
 
-    <form asp-action="Create" method="post">
+    <form asp-controller="WorkOrders"
+          asp-action="Create"
+          method="post">
+
         @Html.AntiForgeryToken()
 
-        <div asp-validation-summary="ModelOnly"
+        <div asp-validation-summary="All"
              class="text-danger mb-3"></div>
+
+        <h4 class="mb-3">Client et équipement</h4>
+
+        <div class="mb-3">
+            <label asp-for="ClientId" class="form-label">
+                Client *
+            </label>
+
+            <select asp-for="ClientId"
+                    asp-items="Model.Clients"
+                    class="form-select">
+                <option value="0">Sélectionnez un client</option>
+            </select>
+
+            <span asp-validation-for="ClientId"
+                  class="text-danger"></span>
+
+            @if (!Model.Clients.Any())
+            {
+                <div class="alert alert-warning mt-2">
+                    Aucun client actif n'est disponible.
+                    Vérifiez les clients enregistrés.
+                </div>
+            }
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="EquipmentId" class="form-label">
+                Équipement frigorifique *
+            </label>
+
+            <select asp-for="EquipmentId"
+                    asp-items="Model.Equipments"
+                    class="form-select">
+                <option value="0">
+                    Sélectionnez d'abord un client
+                </option>
+            </select>
+
+            <span asp-validation-for="EquipmentId"
+                  class="text-danger"></span>
+
+            <small class="text-muted">
+                Seuls les équipements du client sélectionné
+                seront affichés.
+            </small>
+        </div>
+
+        <hr class="my-4" />
+
+        <h4 class="mb-3">Informations sur le service</h4>
 
         <div class="mb-3">
             <label asp-for="Title" class="form-label">
-                Título del servicio
+                Titre de la commande *
             </label>
-            <input asp-for="Title" class="form-control" />
+
+            <input asp-for="Title"
+                   class="form-control" />
+
             <span asp-validation-for="Title"
                   class="text-danger"></span>
         </div>
 
         <div class="mb-3">
             <label asp-for="Description" class="form-label">
-                Descripción del trabajo
+                Description de l'intervention *
             </label>
+
             <textarea asp-for="Description"
                       class="form-control"
                       rows="4"></textarea>
+
             <span asp-validation-for="Description"
                   class="text-danger"></span>
         </div>
 
         <div class="mb-3">
             <label asp-for="ServiceType" class="form-label">
-                Tipo de mantenimiento
+                Type de maintenance
             </label>
-            <select asp-for="ServiceType" class="form-select">
-                <option value="Preventivo">Preventivo</option>
-                <option value="Correctivo">Correctivo</option>
+
+            <select asp-for="ServiceType"
+                    class="form-select">
+                <option value="Preventivo">Préventif</option>
+                <option value="Correctivo">Correctif</option>
             </select>
+
             <span asp-validation-for="ServiceType"
                   class="text-danger"></span>
         </div>
 
         <div class="mb-3">
             <label asp-for="TechnicianId" class="form-label">
-                Técnico responsable
+                Technicien responsable
             </label>
+
             <select asp-for="TechnicianId"
                     asp-items="Model.Technicians"
                     class="form-select">
-                <option value="">Sin asignar</option>
+                <option value="">Non assigné</option>
             </select>
+
             <span asp-validation-for="TechnicianId"
                   class="text-danger"></span>
         </div>
 
+        <div class="mb-4">
+            <label asp-for="ScheduledAt" class="form-label">
+                Date et heure prévues
+            </label>
+
+            <input asp-for="ScheduledAt"
+                   type="datetime-local"
+                   class="form-control" />
+
+            <span asp-validation-for="ScheduledAt"
+                  class="text-danger"></span>
+        </div>
+
         <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-info">
-                Guardar orden
+            <button type="submit"
+                    class="btn btn-info">
+                Enregistrer la commande
             </button>
-            <a asp-action="Index"
+
+            <a asp-controller="WorkOrders"
+               asp-action="Index"
                class="btn btn-outline-secondary">
-                Cancelar
+                Annuler
             </a>
         </div>
     </form>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const clientSelect =
+                document.getElementById("ClientId");
+
+            const equipmentSelect =
+                document.getElementById("EquipmentId");
+
+            const endpoint =
+                '@Url.Action("GetEquipments", "WorkOrders")';
+
+            const initialEquipmentId =
+                '@Model.EquipmentId';
+
+            if (!clientSelect || !equipmentSelect) {
+                console.error("Sélecteurs introuvables.");
+                return;
+            }
+
+            let requestNumber = 0;
+
+            async function loadEquipments(restoreId = "0") {
+                const currentRequest = ++requestNumber;
+                const clientId = clientSelect.value;
+
+                equipmentSelect.innerHTML = "";
+                equipmentSelect.add(
+                    new Option(
+                        "Sélectionnez d'abord un client",
+                        "0"
+                    )
+                );
+                equipmentSelect.disabled = true;
+
+                if (!clientId || clientId === "0") {
+                    return;
+                }
+
+                equipmentSelect.options[0].text =
+                    "Chargement des équipements...";
+
+                try {
+                    const response = await fetch(
+                        `${endpoint}?clientId=${encodeURIComponent(clientId)}`,
+                        { credentials: "same-origin" }
+                    );
+
+                    if (!response.ok) {
+                        throw new Error(
+                            `Erreur HTTP ${response.status}`
+                        );
+                    }
+
+                    const equipments = await response.json();
+
+                    if (currentRequest !== requestNumber) {
+                        return;
+                    }
+
+                    equipmentSelect.innerHTML = "";
+
+                    equipmentSelect.add(
+                        new Option(
+                            equipments.length > 0
+                                ? "Sélectionnez un équipement"
+                                : "Aucun équipement disponible",
+                            "0"
+                        )
+                    );
+
+                    for (const equipment of equipments) {
+                        equipmentSelect.add(
+                            new Option(
+                                equipment.name,
+                                equipment.id.toString()
+                            )
+                        );
+                    }
+
+                    equipmentSelect.disabled =
+                        equipments.length === 0;
+
+                    if (
+                        restoreId !== "0" &&
+                        equipments.some(e =>
+                            e.id.toString() === restoreId)
+                    ) {
+                        equipmentSelect.value = restoreId;
+                    }
+                } catch (error) {
+                    if (currentRequest !== requestNumber) {
+                        return;
+                    }
+
+                    equipmentSelect.innerHTML = "";
+                    equipmentSelect.add(
+                        new Option(
+                            "Erreur de chargement",
+                            "0"
+                        )
+                    );
+
+                    console.error(error);
+                }
+            }
+
+            clientSelect.addEventListener("change", () => {
+                loadEquipments();
+            });
+
+            if (clientSelect.value !== "0") {
+                loadEquipments(initialEquipmentId);
+            } else {
+                equipmentSelect.disabled = true;
+            }
+        });
+    </script>
+}

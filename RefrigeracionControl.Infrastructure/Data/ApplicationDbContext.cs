@@ -15,8 +15,12 @@ public class ApplicationDbContext
 	{
 	}
 
+    public DbSet<Client> Clients => Set<Client>();
 
-	public DbSet<WorkOrder> WorkOrders
+    public DbSet<RefrigerationEquipment> RefrigerationEquipments
+        => Set<RefrigerationEquipment>();
+
+    public DbSet<WorkOrder> WorkOrders
 		=> Set<WorkOrder>();
 
 
@@ -92,5 +96,89 @@ public class ApplicationDbContext
 					.HasForeignKey(x => x.TechnicianId)
 					.OnDelete(DeleteBehavior.Restrict);
 			});
-	}
+
+        // CLIENTES
+        builder.Entity<Client>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Name)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            entity.Property(x => x.ContactName)
+                .HasMaxLength(150);
+
+            entity.Property(x => x.Email)
+                .HasMaxLength(254);
+
+            entity.Property(x => x.Phone)
+                .HasMaxLength(40);
+
+            entity.Property(x => x.Address)
+                .HasMaxLength(300);
+
+            entity.Property(x => x.City)
+                .HasMaxLength(120);
+
+            entity.Property(x => x.Notes)
+                .HasMaxLength(2000);
+
+            entity.HasIndex(x => x.Name);
+        });
+
+        // EQUIPOS
+        builder.Entity<RefrigerationEquipment>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Name)
+                .IsRequired()
+                .HasMaxLength(180);
+
+            entity.Property(x => x.EquipmentType)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            entity.Property(x => x.Brand)
+                .HasMaxLength(100);
+
+            entity.Property(x => x.Model)
+                .HasMaxLength(100);
+
+            entity.Property(x => x.SerialNumber)
+                .HasMaxLength(150);
+
+            entity.Property(x => x.Location)
+                .HasMaxLength(200);
+
+            entity.Property(x => x.RefrigerantType)
+                .HasMaxLength(80);
+
+            entity.Property(x => x.Notes)
+                .HasMaxLength(2000);
+
+            entity.HasOne(x => x.Client)
+                .WithMany(x => x.Equipments)
+                .HasForeignKey(x => x.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => x.SerialNumber);
+        });
+
+        // RELACIONES OPCIONALES DE ÓRDENES
+        builder.Entity<WorkOrder>(entity =>
+        {
+            entity.HasOne<Client>()
+                .WithMany()
+                .HasForeignKey(x => x.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne<RefrigerationEquipment>()
+                .WithMany()
+                .HasForeignKey(x => x.EquipmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+    }
 }
