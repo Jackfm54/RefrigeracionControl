@@ -1,0 +1,52 @@
+@model RefrigeracionControl.Domain.Entities.Client
+@{
+    ViewData["Title"] = "Ficha del cliente";
+}
+<div class="dashboard-heading"><h2>@Model.Name</h2><p>Ficha del cliente</p></div>
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+<div class="panel-card mb-3">
+    <dl class="row">
+        <dt class="col-sm-3">Contacto</dt><dd class="col-sm-9">@(Model.ContactName ?? "—")</dd>
+        <dt class="col-sm-3">Correo</dt><dd class="col-sm-9">@(Model.Email ?? "—")</dd>
+        <dt class="col-sm-3">Teléfono</dt><dd class="col-sm-9">@(Model.Phone ?? "—")</dd>
+        <dt class="col-sm-3">Dirección</dt><dd class="col-sm-9">@(Model.Address ?? "—")</dd>
+        <dt class="col-sm-3">Ciudad</dt><dd class="col-sm-9">@(Model.City ?? "—")</dd>
+        <dt class="col-sm-3">Observaciones</dt><dd class="col-sm-9" style="white-space:pre-wrap">@(Model.Notes ?? "—")</dd>
+        <dt class="col-sm-3">Estado</dt><dd class="col-sm-9">@(Model.IsActive ? "Activo" : "Inactivo")</dd>
+    </dl>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-info">Editar</a>
+        <form asp-action="SetStatus" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('¿Confirma el cambio de estado del cliente?');">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="isActive" value="@(!Model.IsActive ? "true" : "false")" />
+            <button type="submit" class="btn @(Model.IsActive ? "btn-outline-danger" : "btn-outline-success")">@(Model.IsActive ? "Desactivar" : "Activar")</button>
+        </form>
+        <a asp-action="Index" class="btn btn-outline-secondary">Volver</a>
+    </div>
+</div>
+<div class="panel-card">
+    <h3>Equipos asociados (@Model.Equipments.Count)</h3>
+    @if (!Model.Equipments.Any())
+    {
+        <p>No hay equipos asociados.</p>
+    }
+    else
+    {
+        <div class="table-responsive"><table class="table table-hover align-middle">
+            <thead><tr><th>Equipo</th><th>Tipo</th><th>Serie</th><th>Estado propio</th></tr></thead>
+            <tbody>
+            @foreach (var equipment in Model.Equipments.OrderBy(x => x.Name))
+            {
+                <tr><td>@equipment.Name</td><td>@equipment.EquipmentType</td><td>@equipment.SerialNumber</td><td>@(equipment.IsActive ? "Activo" : "Inactivo")</td></tr>
+            }
+            </tbody>
+        </table></div>
+    }
+    @if (!Model.IsActive)
+    {
+        <p class="text-muted">El cliente inactivo no está disponible para nuevas órdenes o nuevos equipos.</p>
+    }
+</div>
