@@ -24,7 +24,18 @@
         </a>
     </div>
 
-<div class="table-responsive">
+<form method="get" asp-action="Index" class="row g-2 mb-3">
+        <div class="col-md-6"><input name="search" value="@ViewData["Search"]" class="form-control" placeholder="Nombre, contacto, ciudad, correo o teléfono" aria-label="Buscar clientes" /></div>
+        <div class="col-md-3">
+            <select name="status" class="form-select" aria-label="Estado">
+                <option value="">Todos los estados</option>
+                <option value="active" selected="@((string?)ViewData["Status"] == "active")">Activos</option>
+                <option value="inactive" selected="@((string?)ViewData["Status"] == "inactive")">Inactivos</option>
+            </select>
+        </div>
+        <div class="col-md-3"><button class="btn btn-info" type="submit">Buscar</button> <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a></div>
+    </form>
+    <div class="table-responsive">
         <table class="table table-hover align-middle">
             <thead>
                 <tr>
@@ -33,6 +44,7 @@
                     <th>Teléfono</th>
                     <th>Ciudad</th>
                     <th>Estado</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -44,7 +56,11 @@
                         <td>@client.Phone</td>
                         <td>@client.City</td>
                         <td>
-                            @(client.IsActive ? "Activo" : "Inactivo")
+                            <span class="badge @(client.IsActive ? "bg-success" : "bg-secondary")">@(client.IsActive ? "Activo" : "Inactivo")</span>
+                        </td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@client.Id" class="btn btn-sm btn-outline-info">Ver</a>
+                            <a asp-action="Edit" asp-route-id="@client.Id" class="btn btn-sm btn-outline-secondary">Editar</a>
                         </td>
                     </tr>
                 }
@@ -55,7 +71,7 @@
 @if (!Model.Any())
     {
         <div class="empty-state">
-            No hay clientes registrados.
+            No se encontraron clientes.
         </div>
     }
 </div>
