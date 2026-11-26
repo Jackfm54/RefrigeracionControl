@@ -1,0 +1,35 @@
+@model RefrigeracionControl.Web.ViewModels.EquipmentDetailsViewModel
+@{ ViewData["Title"] = "Ficha técnica"; var e = Model.Equipment; }
+<div class="dashboard-heading"><h2>@e.Name</h2><p>Ficha técnica e historial de órdenes</p></div>
+@if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+@if (TempData["Error"] != null) { <div class="alert alert-danger">@TempData["Error"]</div> }
+<div class="panel-card mb-3">
+<dl class="row">
+<dt class="col-sm-3">Cliente</dt><dd class="col-sm-9">@e.Client.Name</dd>
+<dt class="col-sm-3">Tipo</dt><dd class="col-sm-9">@e.EquipmentType</dd>
+<dt class="col-sm-3">Marca</dt><dd class="col-sm-9">@e.Brand</dd>
+<dt class="col-sm-3">Modelo</dt><dd class="col-sm-9">@e.Model</dd>
+<dt class="col-sm-3">Serie</dt><dd class="col-sm-9">@e.SerialNumber</dd>
+<dt class="col-sm-3">Ubicación</dt><dd class="col-sm-9">@e.Location</dd>
+<dt class="col-sm-3">Refrigerante</dt><dd class="col-sm-9">@e.RefrigerantType</dd>
+<dt class="col-sm-3">Observaciones</dt><dd class="col-sm-9" style="white-space:pre-wrap">@e.Notes</dd>
+<dt class="col-sm-3">Estado</dt><dd class="col-sm-9">@(e.IsActive ? "Activo" : "Inactivo") @(e.Client.IsActive ? "" : "(cliente inactivo)")</dd>
+</dl>
+<div class="d-flex flex-wrap gap-2">
+<a asp-action="Edit" asp-route-id="@e.Id" class="btn btn-info">Editar</a>
+<form asp-action="SetStatus" asp-route-id="@e.Id" method="post" onsubmit="return confirm('¿Confirma el cambio de estado?');">
+@Html.AntiForgeryToken()
+<input type="hidden" name="isActive" value="@(!e.IsActive ? "true" : "false")" />
+<button class="btn btn-outline-secondary" type="submit">@(e.IsActive ? "Desactivar" : "Activar")</button>
+</form>
+<a asp-action="Index" class="btn btn-outline-secondary">Volver</a>
+</div></div>
+<div class="panel-card"><h3>Historial de órdenes (@Model.Orders.Count)</h3>
+@if (!Model.Orders.Any()) { <p>No hay órdenes asociadas.</p> }
+else {
+<div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Orden</th><th>Servicio</th><th>Estado</th><th>Creación (UTC)</th><th>Finalización (UTC)</th><th>Diagnóstico</th><th>Trabajo realizado</th></tr></thead><tbody>
+@foreach (var order in Model.Orders) {
+<tr><td>@order.Id — @order.Title</td><td>@order.ServiceType</td><td>@order.Status</td><td>@order.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</td><td>@(order.CompletedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td><td>@order.Diagnosis</td><td>@order.WorkPerformed</td></tr>
+}
+</tbody></table></div>
+}</div>

@@ -29,6 +29,12 @@
         </a>
     </div>
 
+    <form method="get" asp-action="Index" class="row g-2 mb-3">
+        <div class="col-md-4"><input name="search" value="@ViewData["Search"]" class="form-control" placeholder="Equipo, cliente, marca o serie" /></div>
+        <div class="col-md-3"><select name="clientId" asp-items="ViewBag.ClientFilter" class="form-select"><option value="">Todos los clientes</option></select></div>
+        <div class="col-md-3"><select name="status" class="form-select"><option value="">Todos los estados</option><option value="active" selected="@(ViewData["Status"] as string == "active")">Disponibles</option><option value="inactive" selected="@(ViewData["Status"] as string == "inactive")">No disponibles</option></select></div>
+        <div class="col-md-2"><button class="btn btn-info">Filtrar</button> <a asp-action="Index">Limpiar</a></div>
+    </form>
     <div class="table-responsive">
         <table class="table table-hover align-middle">
 
@@ -42,7 +48,7 @@
                     <th>Modelo</th>
                     <th>N.º de serie</th>
                     <th>Ubicación</th>
-                    <th>Estado</th>
+                    <th>Estado</th><th>Acciones</th>
                 </tr>
             </thead>
 
@@ -59,7 +65,7 @@
                         <td>@equipment.SerialNumber</td>
                         <td>@equipment.Location</td>
                         <td>
-                            @if (equipment.IsActive)
+                            @if (equipment.IsActive && equipment.Client.IsActive)
                             {
                                 <span class="badge bg-success">
                                     Activo
@@ -68,10 +74,11 @@
                             else
                             {
                                 <span class="badge bg-secondary">
-                                    Inactivo
+                                    @(equipment.IsActive ? "Cliente inactivo" : "Inactivo")
                                 </span>
                             }
                         </td>
+                        <td><a asp-action="Details" asp-route-id="@equipment.Id" class="btn btn-sm btn-outline-info">Detalles</a> <a asp-action="Edit" asp-route-id="@equipment.Id" class="btn btn-sm btn-outline-secondary">Editar</a></td>
                     </tr>
                 }
             </tbody>
@@ -82,10 +89,9 @@
     @if (!Model.Any())
     {
         <div class="empty-state">
-            <strong>No hay equipos registrados</strong>
+            <strong>No se encontraron equipos</strong>
             <p>
-                Registra el primer equipo de refrigeración
-                y asígnalo a un cliente.
+                Registra un equipo o ajusta los filtros.
             </p>
         </div>
     }
